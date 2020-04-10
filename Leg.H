@@ -26,12 +26,15 @@ public:
 	// 1 for right, -1 for left
 	virtual Result legRightLeft(double zInit, double xInit, double xFin, int side);
 	// this func wiil calc the leg path (x, y, z) from given conditions 
-	Result pathFunc(int z0, int zf);
+	Result pathFunc(double z0, double zf);
 	// makes one step from the designed path (convert xyz to thetas)
 	Result nextMove();
 	virtual void print(ostream& co) = 0;
+	// get leg to robot transformation matrix
+	Matrix<double>& getA_leg_R();
+	// get current location of the leg foot relative to the leg shoulder
+	Matrix<double>& getCurrentLocation();
 	// Leg Detor
-
 	virtual ~Leg();
 protected:
 	double theta1_;

@@ -17,11 +17,19 @@ double Leg::getTheta3() const {
 	return theta3_;
 }
 
+Matrix<double>& Leg::getA_leg_R() {
+	return A_leg_R;
+}
+
+Matrix<double>& Leg::getCurrentLocation() {
+	return CurrLocation;
+}
+
 // this function creates a yz path for a leg (should recieve pointers to empty y & z vectors) x will be defined in previous func
-Result Leg::pathFunc(int z0, int zf) {
+Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
 	//if (yVec.size() != 0 || zVec.size() != 0) return FAIL; // vectors should be empty
-	double a, b, c, d, e, f, g, h, i, t, delta, t0, y0, yf, yMax, zMax, tf, v0, vf, a0, af, inValue, outValue;
+	double a, b, c, d, e, f, g, h, i, delta, t0, y0, yf, yMax, zMax, tf, v0, vf, a0, af, inValue, outValue;
 	delta = 0.01; // determines the time step
 	t0 = 0;
 	tf = 0.1;
@@ -45,13 +53,13 @@ Result Leg::pathFunc(int z0, int zf) {
 	h = -(y0 * pow(zMax, 2) - yMax * pow(z0, 2) - y0 * pow(zf, 2) + yf * pow(z0, 2) + yMax * pow(zf, 2) - yf * pow(zMax, 2)) / ((z0 - zf) * (z0 * zMax - z0 * zf + zMax * zf - pow(zMax, 2)));
 	i = (y0 * pow(zf, 2) + yf * pow(z0, 2) - 2 * z0 * zf * sqrt((y0 - yMax) * (yf - yMax)) - 2 * yMax * z0 * zf) / (pow(z0, 2) - 2 * z0 * zf + pow(zf, 2));
 
-	for (float t = t0; t <= tf; t+= delta) {
+	for (double t = t0; t <= tf; t+= delta) {
 		inValue = a * pow(t, 5) + b * pow(t, 4) + c * pow(t, 3) + d * pow(t, 2) + e * t + f;
 		outValue = g * pow(inValue,2) + h * inValue + i;
 		zVec.push_back(inValue);
 		yVec.push_back(outValue);
 	}
-	return SUCCES;
+	return SUCCESS;
 }
 
 Result Leg::legForwardBackWard(double xInit, double zInit, double zFin, int forward) {
@@ -60,7 +68,7 @@ Result Leg::legForwardBackWard(double xInit, double zInit, double zFin, int forw
 	for (int i = 0; i < size; i++) {
 		xVec.push_back(xInit);
 	}
-	return SUCCES;
+	return SUCCESS;
 }
 
 Result Leg::legRightLeft(double zInit, double xInit, double xFin, int side) {
@@ -69,7 +77,7 @@ Result Leg::legRightLeft(double zInit, double xInit, double xFin, int side) {
 	for (int i = 0; i < size; i++) {
 		zVec.push_back(zInit);
 	}
-	return SUCCES;
+	return SUCCESS;
 }
 
 
@@ -81,7 +89,7 @@ Result Leg::nextMove() {
 	setInverseKinematics(xVec[index], yVec[index], zVec[index]);
 	// send inverse kinematics data to arduino
 	index++;
-	return SUCCES;
+	return SUCCESS;
 }
 
 Leg::~Leg(){}

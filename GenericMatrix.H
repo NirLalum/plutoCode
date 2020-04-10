@@ -24,7 +24,7 @@ protected:
 template <class T>
 class Matrix {
 public:
-	Matrix(int rows, int cols) : cols_(cols), rows_(rows) {
+	Matrix(int rows = 4, int cols= 4) : cols_(cols), rows_(rows) {
 		int i;
 		T* arr;
 		arr = new T[rows * cols];
@@ -33,6 +33,41 @@ public:
 			arr[i] = 0;
 		}
 		matrix_ = arr;
+	}
+
+	Matrix(int rows, int cols, vector<T>& initializeVec) : cols_(cols), rows_(rows) {
+		int i;
+		T* arr;
+		arr = new T[rows * cols];
+		// initializing matrix
+		for (i = 0; i < rows * cols; i++) {
+			arr[i] = 0;
+		}
+		matrix_ = arr;
+		MatrixFromVector(initializeVec);
+	}
+
+	// copy ctor
+	Matrix(const Matrix<T>& srcMatrix) : Matrix(srcMatrix.getRowsNum(), srcMatrix.getColumnsNum()) {
+		int i = 1, j = 1;
+		for (i = 1; i <= srcMatrix.getRowsNum(); i++) {
+			for (j = 1; j <= srcMatrix.getColumnsNum(); j++) {
+				setElement(i, j, srcMatrix.getElement(i, j));
+			}
+		}
+	}
+
+	// getiing a part of the matrix
+	Matrix& sliceMatrix(int rowInit, int rowFin, int colInit, int colFin) {
+		if (rowFin - rowInit + 1 > rows_ || colFin - colInit + 1 > cols_) throw MatrixExeption("error in slice matrix: the sliced matrix is not contained in original Matrix");
+		Matrix<T> solMat(rowFin - rowInit + 1, colFin - colInit + 1);
+		int i = rowInit, j = colInit, solRowIndex = 1, solColIndex = 1;
+		for (i = rowInit, solRowIndex = 1; i <= rowFin; i++, solRowIndex++) {
+			for (j = colInit, solColIndex = 1; j <= colFin; j++, solColIndex++) {
+				solMat.setElement(solRowIndex, solColIndex, getElement(i, j));
+			}
+		}
+		return solMat;
 	}
 
 	// example of a vector for a 2by2 matrix: [Mat[0,0] Mat[0,1], Mat[1,0], Mat[1,1]]
@@ -69,13 +104,19 @@ public:
 
 	//overlapping operator =
 	Matrix& operator=(Matrix& srcMat) {
-		if (rows_ != srcMat.getRowsNum() || cols_ != srcMat.getColumnsNum()) throw MatrixExeption("both matrixes should have the same number of rows and cols");
+		if (rows_ < srcMat.getRowsNum() || cols_ < srcMat.getColumnsNum()) throw MatrixExeption("error in assign operator: solMat should be able to fill source mat");
 		int i = 1, j = 1;
-		for (i = 1; i <= rows_; i++) {
-			for (j = 1; j <= cols_; j++) {
+		for (i = 1; i <= srcMat.getRowsNum(); i++) {
+			for (j = 1; j <= srcMat.getColumnsNum(); j++) {
 				setElement(i, j, srcMat.getElement(i, j));
 			}
 		}
+		return *this;
+	}
+
+	Matrix& operator=(vector<T>& srcVec) {
+		MatrixFromVector(srcVec);
+		return *this;
 	}
 
 	void printMatrix() {

@@ -4,11 +4,11 @@ RbLeg::RbLeg() : Leg() {
     vector<double> initializeVector{ -1, 0, 0, -w / 2, 0, 0, -1, H / 2, 0, -1, 0, 0, 0, 0, 0, 1 };
     try
     {
-        A_leg_R.MatrixFromVector(initializeVector);
+        A_leg_R = initializeVector;
     }
     catch (exception & Error)
     {
-        cout << Error.what() << endl;
+        cout << "error in RbLeg ctor: " << Error.what() << endl;
     }
     //A_leg_R.printMatrix();
 }
@@ -29,7 +29,7 @@ Result RbLeg::setInverseKinematics(double px, double py, double pz) {
     py_new = py + l2 * cos(theta1_);
     px_new = px - l2 * sin(theta1_);
     theta2_ = fi + aux * (atan2((pz - l1), sqrt(pow(px_new, 2) + pow(py_new, 2))) - atan2(l4 * S3, (l3 + l4 * C3)));
-    return SUCCES;
+    return SUCCESS;
 }
 
 Result RbLeg::legForwardBackWard(double xInit, double zInit, double zFin, int forward) {
