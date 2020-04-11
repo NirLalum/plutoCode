@@ -58,7 +58,7 @@ public:
 	}
 
 	// getiing a part of the matrix
-	Matrix& sliceMatrix(int rowInit, int rowFin, int colInit, int colFin) {
+	Matrix<T> sliceMatrix(int rowInit, int rowFin, int colInit, int colFin) {
 		if (rowFin - rowInit + 1 > rows_ || colFin - colInit + 1 > cols_) throw MatrixExeption("error in slice matrix: the sliced matrix is not contained in original Matrix");
 		Matrix<T> solMat(rowFin - rowInit + 1, colFin - colInit + 1);
 		int i = rowInit, j = colInit, solRowIndex = 1, solColIndex = 1;
@@ -102,8 +102,20 @@ public:
 		matrix_[row * cols_ + col] = elem;
 	}
 
-	//overlapping operator =
-	Matrix& operator=(Matrix& srcMat) {
+	Matrix& operator=(Matrix<T> srcMat) {
+		if (rows_ < srcMat.getRowsNum() || cols_ < srcMat.getColumnsNum()) throw MatrixExeption("error in assign operator: solMat should be able to fill source mat");
+		int i = 1, j = 1;
+		for (i = 1; i <= srcMat.getRowsNum(); i++) {
+			for (j = 1; j <= srcMat.getColumnsNum(); j++) {
+				setElement(i, j, srcMat.getElement(i, j));
+			}
+		}
+		return *this;
+	}
+
+
+	//overloading operator =
+	Matrix& operator=(Matrix<T>& srcMat) {
 		if (rows_ < srcMat.getRowsNum() || cols_ < srcMat.getColumnsNum()) throw MatrixExeption("error in assign operator: solMat should be able to fill source mat");
 		int i = 1, j = 1;
 		for (i = 1; i <= srcMat.getRowsNum(); i++) {
@@ -130,12 +142,12 @@ public:
 	}
 
 	// get the transpose of "this" matrix
-	Matrix& getTranspose() {
+	Matrix<T> getTranspose() {
 		Matrix<T> solMat(getColumnsNum(), getRowsNum());
-		int i = 0, j = 0;
+		int i = 1, j = 1;
 		T elem;
-		for (i; i < rows_; i++) {
-			for (j; j < cols_; j++) {
+		for (i = 1; i < rows_; i++) {
+			for (j = 1; j < cols_; j++) {
 				elem = getElement(i, j);
 				solMat.setElement(j, i, elem);
 			}
@@ -144,11 +156,11 @@ public:
 	}
 
 	// this function multiply "this" matrix with another one
-	Matrix& operator*(Matrix& MatB) {
+	Matrix<T> operator*(Matrix<T>& MatB) {
 		if (cols_ != MatB.getRowsNum()) throw MatrixExeption("first matrix rows not equal to second matrix cols");
 		Matrix<T> solMat(rows_, MatB.getColumnsNum());
 		int i = 1, j = 1, currRow = 1;
-		T solElem, MatAelem, MatBelem;
+		T solElem = T(), MatAelem = T(), MatBelem = T();
 		for (i=1; i <= rows_; i++) {
 			for (j=1; j <= MatB.getColumnsNum(); j++) {
 				for (currRow=1; currRow <= MatB.getRowsNum(); currRow++) {
@@ -163,8 +175,13 @@ public:
 		return solMat;
 	}
 
+	Matrix<T> operator*(vector<T>& srcVector) {
+		Matrix<T> solMat;
+		return solMat;
+	}
+
 	// adds 2 matrixes
-	Matrix& operator+(Matrix& MatB) {
+	Matrix<T> operator+(Matrix<T>& MatB) {
 		if (cols_ != MatB.getColumnsNum() || rows_ != MatB.getRowsNum()) throw MatrixExeption("both matrixes should have the same number of rows and cols");
 		Matrix<T> solMat(rows_, cols_);
 		int i = 1, j = 1;
@@ -181,7 +198,7 @@ public:
 	}
 
 	// substract 2 matrixes
-	Matrix& operator-(Matrix& MatB) {
+	Matrix<T> operator-(Matrix<T>& MatB) {
 		if (cols_ != MatB.getColumnsNum() || rows_ != MatB.getRowsNum()) throw MatrixExeption("both matrixes should have the same number of rows and cols");
 		Matrix<T> solMat(rows_, cols_);
 		int i = 1, j = 1;

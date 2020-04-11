@@ -27,13 +27,16 @@ public:
 	virtual Result legRightLeft(double zInit, double xInit, double xFin, int side);
 	// this func wiil calc the leg path (x, y, z) from given conditions 
 	Result pathFunc(double z0, double zf);
-	// makes one step from the designed path (convert xyz to thetas)
+	// move a leg according to a pre made path (only when one leg in moving' not in parallel moving)
+	Result moveLeg();
+	// moves leg according to pre made pathes (convert xyz to thetas)
 	Result nextMove();
 	virtual void print(ostream& co) = 0;
 	// get leg to robot transformation matrix
 	Matrix<double>& getA_leg_R();
 	// get current location of the leg foot relative to the leg shoulder
 	Matrix<double>& getCurrentLocation();
+	void setCurrentLocation(vector<double>& locationVec);
 	// Leg Detor
 	virtual ~Leg();
 protected:
@@ -44,8 +47,8 @@ protected:
 	vector <double> yVec;
 	vector <double> zVec;
 	Matrix <double> A_leg_R{ 4, 4 };
-	Matrix <double> CurrLocation{ 4, 1 }; // relative to the robot COM (update in COM gait)
-	int index; 
+	Matrix <double> CurrLocation{ 4, 1 }; // relative to the robot shoulder axis (update in COM gait) 
+	int index;
 };
 
 

@@ -25,6 +25,11 @@ Matrix<double>& Leg::getCurrentLocation() {
 	return CurrLocation;
 }
 
+// updating current location of the leg (x y z relative to the shoulder axis)
+void Leg::setCurrentLocation(vector<double>& locationVec) {
+	CurrLocation = locationVec;
+}
+
 // this function creates a yz path for a leg (should recieve pointers to empty y & z vectors) x will be defined in previous func
 Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
@@ -80,6 +85,11 @@ Result Leg::legRightLeft(double zInit, double xInit, double xFin, int side) {
 	return SUCCESS;
 }
 
+Result Leg::moveLeg() {
+	while (nextMove());
+	// update current location og the leg ------------------------------ (mean while not real values)
+	return SUCCESS;
+}
 
 Result Leg::nextMove() {
 	if (index == xVec.size()) { // if we reach the end of the path
@@ -87,7 +97,8 @@ Result Leg::nextMove() {
 		return FAIL;
 	}
 	setInverseKinematics(xVec[index], yVec[index], zVec[index]);
-	// send inverse kinematics data to arduino
+	// send inverse kinematics data to arduino ----------------------------
+	// implement here some kind of control func
 	index++;
 	return SUCCESS;
 }

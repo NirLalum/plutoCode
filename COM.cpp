@@ -13,8 +13,28 @@ COM::COM() : currGamma(0) {
 	//A_R_W.printMatrix();
 }
 
+// this function moves the robot forward and backward and updated each time the POSE of the robot
+Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COMfinVec, int forward) {
+	Leg* legSequance[4] = { &LfLeg_, &RfLeg_, &LbLeg_, &RbLeg_ };
+	if (forward == -1) Leg* legSequance[4] = { &LbLeg_, &RbLeg_, &LfLeg_, &RfLeg_ };
+	double tiltDelta = 8; // define how much to tilt COM 
+	// tilt COM to the right
+	vector<double> tiltInRobotCords{ tiltDelta, 0, 0, 1 };
+	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords; // -------- finish definition of operator * for stl vector
+	tiltInWorldCords.setElement(4,1,COMfinVec[3]);
+	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), tiltInWorldCords.getElement(4, 1));
+	moveCOM(); // not defined yet
+	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), tiltInWorldCords.getElement(4, 1));
+	
 
-Result COM::COMpathFunc(vector<double>& COMinitVec, vector<double>& COMfinVec) {
+
+
+
+	return SUCCESS;
+}
+
+
+Result COM::COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double gammaInit, double cmXfin, double cmYfin, double cmZfin, double gammaFin) {
 	int stepsNum = 10;
 	int i = 0;
 	COMxVec[i] = 0;
@@ -22,60 +42,56 @@ Result COM::COMpathFunc(vector<double>& COMinitVec, vector<double>& COMfinVec) {
 	COMzVec[i] = 0;
 	gammaVec[i] = 0;
 	for (i = 1; i <= stepsNum; i++) {
-		COMxVec[i] = COMxVec[i - 1] + (COMfinVec[0] - COMinitVec[0]) / stepsNum;
-		COMyVec[i] = COMyVec[i - 1] + (COMfinVec[1] - COMinitVec[1]) / stepsNum;
-		COMzVec[i] = COMzVec[i - 1] + (COMfinVec[2] - COMinitVec[2]) / stepsNum;
-		gammaVec[i] = gammaVec[i - 1] + (COMfinVec[3] - COMinitVec[3]) / stepsNum;
+		COMxVec[i] = COMxVec[i - 1] + (cmXfin - cmXinit) / stepsNum;
+		COMyVec[i] = COMyVec[i - 1] + (cmYfin - cmYinit) / stepsNum;
+		COMzVec[i] = COMzVec[i - 1] + (cmZfin - cmZinit) / stepsNum;
+		gammaVec[i] = gammaVec[i - 1] + (gammaFin - gammaInit) / stepsNum;
 	}
 	return SUCCESS;
 }
 
 
-// this func calcualets the parallel robot configuration inverse kinematics
-Result COM::setParallelInvesrKinematics(double pxDes, double pyDes, double pzDes, double gammaDes) {
+Result COM::setParallelInverseKinematics(double pxDes, double pyDes, double pzDes, double gammaDes) {
 	// ---------- add here work space condition ------------------
-	//define vectors from com to the leg shoulder
 	vector<double> initializeVec1{ -w / 2, H / 2, 0, 1 };
 	vector<double> initializeVec2{ w / 2, H / 2, 0, 1 };
 	vector<double> initializeVec3{ w / 2, -H / 2, 0, 1 };
 	vector<double> initializeVec4{ -w / 2, -H / 2, 0, 1 };
-	Matrix<double>  CMtoSh1(4, 1, initializeVec1);
-	Matrix<double>  CMtoSh2(4, 1, initializeVec2);
-	Matrix<double>  CMtoSh3(4, 1, initializeVec3);
-	Matrix<double>  CMtoSh4(4, 1, initializeVec4);
-	// get desired robot to world transformation matrix
-	Matrix<double> A_R_W_des = getRobotToWorldTrans(pxDes, pyDes, pzDes, gammaDes);
-	// define each foot location relative to the world
-	Matrix<double> foot1WorldLocation = A_R_W_des * LfLeg.getA_leg_R() * LfLeg.getCurrentLocation();
-	Matrix<double> foot2WorldLocation = A_R_W_des * RfLeg.getA_leg_R() * RfLeg.getCurrentLocation();
-	Matrix<double> foot3WorldLocation = A_R_W_des * RbLeg.getA_leg_R() * RbLeg.getCurrentLocation();
-	Matrix<double> foot4WorldLocation = A_R_W_des * LbLeg.getA_leg_R() * LbLeg.getCurrentLocation();
-	// calculating the vector from the shoulder to the foot for each leg and then setting the invesrse kinematics for each leg
-	Matrix<double> S1 = foot1WorldLocation - A_R_W_des * CMtoSh1;
-	Matrix<double> S2 = foot2WorldLocation - A_R_W_des * CMtoSh2;
-	Matrix<double> S3 = foot3WorldLocation - A_R_W_des * CMtoSh3;
-	Matrix<double> S4 = foot4WorldLocation - A_R_W_des * CMtoSh4;
-	// calc world to leg transform
-	Matrix<double> A_leg_W1 = getAinv(A_R_W_des * LfLeg.getA_leg_R());
-	Matrix<double> A_leg_W2 = getAinv(A_R_W_des * RfLeg.getA_leg_R());
-	Matrix<double> A_leg_W3 = getAinv(A_R_W_des * RbLeg.getA_leg_R());
-	Matrix<double> A_leg_W4 = getAinv(A_R_W_des * LbLeg.getA_leg_R());
-	// calc S vector relative ti the world
-	S1 = A_leg_W1.sliceMatrix(1, 3, 1, 3) * S1.sliceMatrix(1, 3, 1, 1);
-	S2 = A_leg_W1.sliceMatrix(1, 3, 1, 3) * S2.sliceMatrix(1, 3, 1, 1);
-	S3 = A_leg_W1.sliceMatrix(1, 3, 1, 3) * S3.sliceMatrix(1, 3, 1, 1);
-	S4 = A_leg_W1.sliceMatrix(1, 3, 1, 3) * S4.sliceMatrix(1, 3, 1, 1);
-	// setting the desired angles for each leg motors
-	// ------------------- add here some try and catch for leg workspace ----------------------------
-	LfLeg.setInverseKinematics(S1.getElement(1, 1), S1.getElement(2, 1), S1.getElement(3, 1));
-	RfLeg.setInverseKinematics(S2.getElement(1, 1), S2.getElement(2, 1), S2.getElement(3, 1));
-	RbLeg.setInverseKinematics(S3.getElement(1, 1), S3.getElement(2, 1), S3.getElement(3, 1));
-	LbLeg.setInverseKinematics(S4.getElement(1, 1), S4.getElement(2, 1), S4.getElement(3, 1));
+	calcOneLegParallelInvesrKinematics(&LfLeg_, initializeVec1, pxDes, pyDes, pzDes, gammaDes);
+	calcOneLegParallelInvesrKinematics(&RfLeg_, initializeVec2, pxDes, pyDes, pzDes, gammaDes);
+	calcOneLegParallelInvesrKinematics(&RbLeg_, initializeVec3, pxDes, pyDes, pzDes, gammaDes);
+	calcOneLegParallelInvesrKinematics(&LbLeg_, initializeVec4, pxDes, pyDes, pzDes, gammaDes);
 
 	return SUCCESS;
 }
 
-Matrix<double>& COM::getAinv(Matrix<double>& Ain) {
+// this func calcualets the parallel robot configuration inverse kinematics
+Result COM::calcOneLegParallelInvesrKinematics(Leg* currLeg, vector<double>& CMtoShValues,double pxDes, double pyDes, double pzDes, double gammaDes) {
+	
+	//define vectors from com to the leg shoulder
+	Matrix<double>  CMtoSh(4, 1, CMtoShValues);
+	
+	// update robot to world transformation matrix
+	setRobotToWorldTrans(pxDes, pyDes, pzDes, gammaDes);
+	// define each foot location relative to the world
+	Matrix<double> footWorldLocation = A_R_W * currLeg->getA_leg_R() * currLeg->getCurrentLocation();
+	// calculating the vector from the shoulder to the foot for each leg and then setting the invesrse kinematics for each leg
+	Matrix<double> tempMat = A_R_W * CMtoSh;
+	Matrix<double> S = footWorldLocation - tempMat;
+	// calc world to leg transform
+	Matrix<double> invAux = A_R_W * currLeg->getA_leg_R();
+	Matrix<double> A_leg_W = getAinv(invAux);
+	// calc S vector relative ti the world
+	Matrix<double> SlicedMat1 = A_leg_W.sliceMatrix(1, 3, 1, 3);
+	Matrix<double> SlicedMat2 = S.sliceMatrix(1, 3, 1, 1);
+	S = SlicedMat1 * SlicedMat2;
+	// setting the desired angles for each leg motors
+	// ------------------- add here some try and catch for leg workspace ----------------------------
+	currLeg->setInverseKinematics(S.getElement(1, 1), S.getElement(2, 1), S.getElement(3, 1));
+	return SUCCESS;
+}
+
+Matrix<double> COM::getAinv(Matrix<double>& Ain) {
 	Matrix<double> Aout(4, 4);
 	Matrix<double> auxVec(3, 1);
 	Matrix<double> auxMat(3, 3);
@@ -95,7 +111,7 @@ Matrix<double>& COM::getAinv(Matrix<double>& Ain) {
 	return Aout;
 }
 
-Result COM::getRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma) {
+Result COM::setRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma) {
 	vector<double> valuesVec{ cos(gamma), -sin(gamma), 0, cmX,
 							sin(gamma), cos(gamma), 0, cmY,
 							0, 0, 1, cmZ,

@@ -14,19 +14,24 @@ class COM {
 public:
 	// ctor
 	COM();
-	Result setParallelInvesrKinematics(double pxDes, double pyDes, double pzDes, double gammeDes);
+	// postion the legs in starting position
+	Result initialRobot();
+	// move the robot COM according to pre made pathes in parallel inverse kinematics function
+	Result moveCOM();
+	Result setParallelInverseKinematics(double pxDes, double pyDes, double pzDes, double gammaDes);
+	Result calcOneLegParallelInvesrKinematics(Leg* currLeg, vector<double>& CMtoShValues, double pxDes, double pyDes, double pzDes, double gammaDes);
 	// creates a path to robot COM
-	Result COMpathFunc(vector<double>& COMinitVec, vector<double>& COMfinVec); // each vec includes cmX, cmY, cmZ, gamma (the angle between z axis)
+	Result COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double gammaInit, double cmXfin, double cmYfin, double cmZfin, double gammaFin); // each vec includes cmX, cmY, cmZ, gamma (the angle between z axis)
 	// for forward (forward = 1) and backward (forward = -1) movement 
-	Result robotBackwardForward(int forward);
+	Result robotBackwardForward(vector<double>& COMinitVec, vector<double>& COMfinVec,int forward);
 	// crab walk mode (side = 1 for right movement and -1 for left)
-	Result robotCrabWalk(int side);
+	Result robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec ,int side);
 	// turning the robot around itself (1 for +z and -1 for -z)
 	Result robotTurn(int direction);
 	// this func is for creating robot to world transform matrix
-	Result getRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma);
+	Result setRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma);
 	// this func caculates the inverse of a transformation matrix
-	Matrix<double>& getAinv(Matrix<double>& Ain);
+	Matrix<double> getAinv(Matrix<double>& Ain);
 	// dtor
 	~COM();
 protected:
@@ -36,10 +41,10 @@ protected:
 	vector<double> COMyVec;
 	vector<double> COMzVec;
 	vector<double> gammaVec;
-	LfLeg LfLeg;
-	RfLeg RfLeg;
-	RbLeg RbLeg;
-	LbLeg LbLeg;
+	LfLeg LfLeg_;
+	RfLeg RfLeg_;
+	RbLeg RbLeg_;
+	LbLeg LbLeg_;
 };
 
 #endif // COM_H
