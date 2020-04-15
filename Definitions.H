@@ -19,6 +19,11 @@
 #define theta2Init  0
 #define theta3Init  0
 
+// movements deltas (cm,rad)
+#define forwardDelta  30;
+#define crabDelta 10;
+#define spinDelta pi/10;
+
 typedef enum _Result {FAIL = 0, SUCCESS = 1} Result;
 
 #endif // !DEFINITIONS_H

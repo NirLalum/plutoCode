@@ -3,7 +3,7 @@
 #include "Matrix.H"
 #include "Definitions.H"
 
-Leg::Leg() : theta1_(theta1Init), theta2_(theta2Init), theta3_(theta3Init), index(0) {}
+Leg::Leg() : theta1_(theta1Init), theta2_(theta2Init), theta3_(theta3Init) {}
 
 double Leg::getTheta1() const {
 	return theta1_;
@@ -30,10 +30,9 @@ void Leg::setCurrentLocation(vector<double>& locationVec) {
 	CurrLocation = locationVec;
 }
 
-// this function creates a yz path for a leg (should recieve pointers to empty y & z vectors) x will be defined in previous func
+// this function creates a yz path for a leg 
 Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
-	//if (yVec.size() != 0 || zVec.size() != 0) return FAIL; // vectors should be empty
 	double a, b, c, d, e, f, g, h, i, delta, t0, y0, yf, yMax, zMax, tf, v0, vf, a0, af, inValue, outValue;
 	delta = 0.01; // determines the time step
 	t0 = 0;
@@ -86,20 +85,23 @@ Result Leg::legRightLeft(double zInit, double xInit, double xFin, int side) {
 }
 
 Result Leg::moveLeg() {
-	while (nextMove());
-	// update current location og the leg ------------------------------ (mean while not real values)
+	int index = 0;
+	for (index; index < xVec.size(); index++) {
+		setInverseKinematics(xVec[index], yVec[index], zVec[index]);
+		// send inverse kinematics data to arduino ----------------------------
+		nextMove();
+		// implement here some kind of control func
+		int i = 1;
+		// update current location of the leg ------------------------------ (mean while not real values)
+		CurrLocation.setElement(1, 1, xVec[index]);
+		CurrLocation.setElement(2, 1, yVec[index]);
+		CurrLocation.setElement(3, 1, zVec[index]);
+	}
 	return SUCCESS;
 }
 
 Result Leg::nextMove() {
-	if (index == xVec.size()) { // if we reach the end of the path
-		index = 0;
-		return FAIL;
-	}
-	setInverseKinematics(xVec[index], yVec[index], zVec[index]);
-	// send inverse kinematics data to arduino ----------------------------
-	// implement here some kind of control func
-	index++;
+	// -- implement here a function that send desired thetas to arduino
 	return SUCCESS;
 }
 

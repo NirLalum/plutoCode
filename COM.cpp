@@ -18,18 +18,68 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	Leg* legSequance[4] = { &LfLeg_, &RfLeg_, &LbLeg_, &RbLeg_ };
 	if (forward == -1) Leg* legSequance[4] = { &LbLeg_, &RbLeg_, &LfLeg_, &RfLeg_ };
 	double tiltDelta = 8; // define how much to tilt COM 
-	// tilt COM to the right
+	double legDelta = forwardDelta;
 	vector<double> tiltInRobotCords{ tiltDelta, 0, 0, 1 };
-	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords; // -------- finish definition of operator * for stl vector
-	tiltInWorldCords.setElement(4,1,COMfinVec[3]);
-	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), tiltInWorldCords.getElement(4, 1));
-	moveCOM(); // not defined yet
-	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), tiltInWorldCords.getElement(4, 1));
-	
+	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords;
+
+	// ---- start gait -------
+	// tilt COM to the right
+	 
+	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
+	moveCOM(); // ------------------ not defined yet ---------------------
+	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
+	// move first leg
+	legSequance[0]->legForwardBackWard(l2 + tiltDelta, 0, forward * legDelta, 1);
+	legSequance[0]->moveLeg();
+
+	//bring back COM to initial pos
+	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3], COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3]);
+	setRobotToWorldTrans(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3]);
+	moveCOM();
+	// move next leg
+	legSequance[1]->legForwardBackWard(l2, 0, forward * legDelta, 1);
+	legSequance[1]->moveLeg();
+
+	// push COM forward/backwawrds
+	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]);
+	setRobotToWorldTrans(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]); // update A_R_W
+	moveCOM();
+	// move next leg
+	legSequance[2]->legForwardBackWard(l2, -forward * legDelta, 0, 1);
+	legSequance[2]->moveLeg();
+
+	// tilt COM to the left
+	tiltInRobotCords[0] = -tiltDelta;
+	tiltInWorldCords = A_R_W * tiltInRobotCords;
+	COMpathFunc(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
+	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]); // update A_R_W
+	moveCOM();
+	// move last leg
+	legSequance[3]->legForwardBackWard(l2 + tiltDelta, -forward * legDelta, 0, 1);
+	legSequance[3]->moveLeg();
+
+	// tilt COM back to the center
+	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3], COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]);
+	setRobotToWorldTrans(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]); // update A_R_W
+	moveCOM();
+
+	// --- end of gait ----
+
+	return SUCCESS;
+}
 
 
-
-
+// this function moves the center of mass of the robot
+Result COM::moveCOM() {
+	int i = 0;
+	for (i; i < COMxVec.size(); i++) {
+		setParallelInverseKinematics(COMxVec[i], COMyVec[i], COMzVec[i], gammaVec[i]);
+		// send desired thetas to arduino
+		LfLeg_.nextMove();
+		RfLeg_.nextMove();
+		RbLeg_.nextMove();
+		LbLeg_.nextMove();
+	}
 	return SUCCESS;
 }
 
@@ -61,7 +111,6 @@ Result COM::setParallelInverseKinematics(double pxDes, double pyDes, double pzDe
 	calcOneLegParallelInvesrKinematics(&RfLeg_, initializeVec2, pxDes, pyDes, pzDes, gammaDes);
 	calcOneLegParallelInvesrKinematics(&RbLeg_, initializeVec3, pxDes, pyDes, pzDes, gammaDes);
 	calcOneLegParallelInvesrKinematics(&LbLeg_, initializeVec4, pxDes, pyDes, pzDes, gammaDes);
-
 	return SUCCESS;
 }
 

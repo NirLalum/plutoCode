@@ -12,6 +12,11 @@ using namespace std;
 #ifndef Leg_H_
 #define Leg_H_
 
+// define consts for initial position of each leg (relative to the shoulder)
+# define xi l2
+# define yi 30
+# define zi 0
+
 class Leg {
 public:
 	// Leg constructor
@@ -48,7 +53,6 @@ protected:
 	vector <double> zVec;
 	Matrix <double> A_leg_R{ 4, 4 };
 	Matrix <double> CurrLocation{ 4, 1 }; // relative to the robot shoulder axis (update in COM gait) 
-	int index;
 };
 
 
