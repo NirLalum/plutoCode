@@ -1,7 +1,7 @@
 // defining a generic matrix
 
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef GENERICMATRIX_H
+#define GENERICMATRIX_H
 
 #include <vector>
 #include <exception>
@@ -24,7 +24,7 @@ protected:
 template <class T>
 class Matrix {
 public:
-	Matrix(int rows = 4, int cols= 4) : cols_(cols), rows_(rows) {
+	Matrix(int rows = 4, int cols = 4) : cols_(cols), rows_(rows) {
 		int i;
 		T* arr;
 		arr = new T[rows * cols];
@@ -73,10 +73,10 @@ public:
 	// example of a vector for a 2by2 matrix: [Mat[0,0] Mat[0,1], Mat[1,0], Mat[1,1]]
 	void MatrixFromVector(vector<T>& initializeVec) {
 		if (initializeVec.size() != rows_ * cols_) throw MatrixExeption("vector should be able to fill the whole matrix");
-		int i = 0, j = 0;
+		int i = 1, j = 1;
 		typename vector<T>::iterator it = initializeVec.begin();
-		for (i=1; i <= rows_; i++) {
-			for (j=1; j <= cols_; j++) {
+		for (i = 1; i <= rows_; i++) {
+			for (j = 1; j <= cols_; j++) {
 				setElement(i, j, *it);
 				it++;
 			}
@@ -89,7 +89,7 @@ public:
 	int getColumnsNum() const {
 		return cols_;
 	}
-	
+
 	T& getElement(int row, int col) const {
 		row--; // so we can send row and col num starting from 1 and not from 0 
 		col--;
@@ -104,6 +104,12 @@ public:
 
 	Matrix& operator=(Matrix<T> srcMat) {
 		if (rows_ < srcMat.getRowsNum() || cols_ < srcMat.getColumnsNum()) throw MatrixExeption("error in assign operator: solMat should be able to fill source mat");
+		if (rows_ != srcMat.getRowsNum() || cols_ != srcMat.getColumnsNum()) {
+			delete matrix_;
+			matrix_ = new T[srcMat.getRowsNum() * srcMat.getColumnsNum()];
+			rows_ = srcMat.getRowsNum();
+			cols_ = srcMat.getColumnsNum();
+		}
 		int i = 1, j = 1;
 		for (i = 1; i <= srcMat.getRowsNum(); i++) {
 			for (j = 1; j <= srcMat.getColumnsNum(); j++) {
@@ -115,6 +121,7 @@ public:
 
 
 	//overloading operator =
+	/*
 	Matrix& operator=(Matrix<T>& srcMat) {
 		if (rows_ < srcMat.getRowsNum() || cols_ < srcMat.getColumnsNum()) throw MatrixExeption("error in assign operator: solMat should be able to fill source mat");
 		int i = 1, j = 1;
@@ -125,6 +132,7 @@ public:
 		}
 		return *this;
 	}
+	*/
 
 	Matrix& operator=(vector<T>& srcVec) {
 		MatrixFromVector(srcVec);
@@ -139,6 +147,7 @@ public:
 			}
 			cout << endl;
 		}
+		cout << endl;
 	}
 
 	// get the transpose of "this" matrix
@@ -146,8 +155,8 @@ public:
 		Matrix<T> solMat(getColumnsNum(), getRowsNum());
 		int i = 1, j = 1;
 		T elem;
-		for (i = 1; i < rows_; i++) {
-			for (j = 1; j < cols_; j++) {
+		for (i = 1; i <= rows_; i++) {
+			for (j = 1; j <= cols_; j++) {
 				elem = getElement(i, j);
 				solMat.setElement(j, i, elem);
 			}
@@ -161,9 +170,9 @@ public:
 		Matrix<T> solMat(rows_, MatB.getColumnsNum());
 		int i = 1, j = 1, currRow = 1;
 		T solElem = T(), MatAelem = T(), MatBelem = T();
-		for (i=1; i <= rows_; i++) {
-			for (j=1; j <= MatB.getColumnsNum(); j++) {
-				for (currRow=1; currRow <= MatB.getRowsNum(); currRow++) {
+		for (i = 1; i <= rows_; i++) {
+			for (j = 1; j <= MatB.getColumnsNum(); j++) {
+				for (currRow = 1; currRow <= MatB.getRowsNum(); currRow++) {
 					MatAelem = getElement(i, currRow);
 					MatBelem = MatB.getElement(currRow, j);
 					solElem += MatAelem * MatBelem;
@@ -186,8 +195,8 @@ public:
 		Matrix<T> solMat(rows_, cols_);
 		int i = 1, j = 1;
 		T solElem, MatAelem, MatBelem;
-		for (i=1; i <= rows_; i++) {
-			for (j=1; j <= cols_; j++) {
+		for (i = 1; i <= rows_; i++) {
+			for (j = 1; j <= cols_; j++) {
 				MatAelem = getElement(i, j);
 				MatBelem = MatB.getElement(i, j);
 				solElem = MatAelem + MatBelem;
@@ -203,8 +212,8 @@ public:
 		Matrix<T> solMat(rows_, cols_);
 		int i = 1, j = 1;
 		T solElem, MatAelem, MatBelem;
-		for (i=1; i <= rows_; i++) {
-			for (j=1; j <= cols_; j++) {
+		for (i = 1; i <= rows_; i++) {
+			for (j = 1; j <= cols_; j++) {
 				MatAelem = getElement(i, j);
 				MatBelem = MatB.getElement(i, j);
 				solElem = MatAelem - MatBelem;
@@ -225,4 +234,5 @@ protected:
 };
 
 #endif
+
 
