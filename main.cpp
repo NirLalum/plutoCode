@@ -9,18 +9,13 @@
 using namespace std;
 
 int main() {
-	//RfLeg leg1;
-	COM com;
-	//Leg* leg = &leg1;
+	COM robotCOM;
+//	RbLeg leg;
+//	leg.pathFunc(30, 0);
+	int forward = 1;
+	vector<double> COMinitVec { 0, 0, 0, 0 };
+	vector<double> COMfinVec {0, 30, 0, 0 };
 
-
-	com.setParallelInverseKinematics(1, 0, 0, 0.1);
-
-	//leg1.legForwardBackWard(l2, 0, 30, 1);
-
-	//while (leg1.nextMove()) {
-		//cout << leg1;
-		//cout << "theta1:" << leg1.getTheta1() << endl << "theta2:" << leg1.getTheta2() << endl << "theta3:" << leg1.getTheta3() << endl << endl;
-	//}
+	robotCOM.robotBackwardForward(COMinitVec, COMfinVec, forward);
 }	
 

@@ -41,7 +41,7 @@ public:
 	Matrix<double>& getA_leg_R();
 	// get current location of the leg foot relative to the leg shoulder
 	Matrix<double>& getCurrentLocation();
-	void setCurrentLocation(vector<double>& locationVec);
+	void setCurrentLocation(double x, double y, double z);
 	// Leg Detor
 	virtual ~Leg();
 protected:

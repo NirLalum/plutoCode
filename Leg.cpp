@@ -1,7 +1,7 @@
 #include <math.h>
 #include "Leg.H"
-#include "Matrix.H"
 #include "Definitions.H"
+ 
 
 Leg::Leg() : theta1_(theta1Init), theta2_(theta2Init), theta3_(theta3Init) {}
 
@@ -26,13 +26,22 @@ Matrix<double>& Leg::getCurrentLocation() {
 }
 
 // updating current location of the leg (x y z relative to the shoulder axis)
-void Leg::setCurrentLocation(vector<double>& locationVec) {
-	CurrLocation = locationVec;
+void Leg::setCurrentLocation(double x, double y, double z) {
+	CurrLocation.setElement(1, 1, x);
+	CurrLocation.setElement(2, 1, y);
+	CurrLocation.setElement(3, 1, z);
 }
 
 // this function creates a yz path for a leg 
 Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
+	int flag = 0;
+	if (z0 > zf) {
+		double tmp = z0;
+		z0 = zf;
+		zf = tmp;
+		flag = 1;
+	}
 	double a, b, c, d, e, f, g, h, i, delta, t0, y0, yf, yMax, zMax, tf, v0, vf, a0, af, inValue, outValue;
 	delta = 0.01; // determines the time step
 	t0 = 0;
@@ -62,6 +71,10 @@ Result Leg::pathFunc(double z0, double zf) {
 		outValue = g * pow(inValue,2) + h * inValue + i;
 		zVec.push_back(inValue);
 		yVec.push_back(outValue);
+	}
+	if (flag == 1) {
+		reverse(zVec.begin(), zVec.end());
+		reverse(yVec.begin(), yVec.end());
 	}
 	return SUCCESS;
 }

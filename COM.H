@@ -31,11 +31,12 @@ public:
 	// this func is for creating robot to world transform matrix
 	Result setRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma);
 	// this func caculates the inverse of a transformation matrix
-	Matrix<double> getAinv(Matrix<double>& Ain);
+	Result getAinv(Matrix<double>* Ain);
 	// dtor
 	~COM();
 protected:
 	Matrix<double> A_R_W{4, 4}; // curr robot to world transformation
+	Matrix<double> last_A_R_W{ 4, 4 };	
 	double currGamma; // current orientation of the robot relative to the world in radian
 	vector<double> COMxVec; 
 	vector<double> COMyVec;
