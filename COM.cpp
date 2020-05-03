@@ -15,8 +15,12 @@ COM::COM() : currGamma(0) {
 
 // this function moves the robot forward and backward and updated each time the POSE of the robot
 Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COMfinVec, int forward) {
+	
 	Leg* legSequance[4] = { &LfLeg_, &RfLeg_, &LbLeg_, &RbLeg_ };
-	if (forward == -1) Leg* legSequance[4] = { &LbLeg_, &RbLeg_, &LfLeg_, &RfLeg_ };
+	if (forward == -1) {
+		legSequance[0] = &LbLeg_; legSequance[1] = &RbLeg_; legSequance[2] = &LfLeg_; legSequance[3] = &RfLeg_;
+	}
+	
 	double tiltDelta = 8; // define how much to tilt COM 
 	double legDelta = forwardDelta;
 	vector<double> tiltVec{ tiltDelta, 0, 0, 1 };
@@ -30,7 +34,7 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	moveCOM(); // ------------------ not defined yet ---------------------
 	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
 	// move first leg
-	legSequance[0]->legForwardBackWard(l2 + tiltDelta, 0, forward * legDelta, 1);
+	legSequance[0]->legForwardBackWard(xi + tiltDelta, 0,  legDelta, forward);
 	legSequance[0]->moveLeg();
 
 	//bring back COM to initial pos // OK
@@ -38,7 +42,7 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	moveCOM();
 	setRobotToWorldTrans(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3]);
 	// move next leg
-	legSequance[1]->legForwardBackWard(l2, 0, forward * legDelta, 1);
+	legSequance[1]->legForwardBackWard(xi, 0, legDelta, forward);
 	legSequance[1]->moveLeg();
 
 	// push COM forward/backwawrds // OK
@@ -46,7 +50,7 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	moveCOM();
 	setRobotToWorldTrans(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]); // update A_R_W
 	// move next leg
-	legSequance[2]->legForwardBackWard(l2, -forward * legDelta, 0, 1);
+	legSequance[2]->legForwardBackWard(xi, -legDelta, 0, forward);
 	legSequance[2]->moveLeg();
 
 	// tilt COM to the left
@@ -56,7 +60,7 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	moveCOM();
 	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]); // update A_R_W
 	// move last leg
-	legSequance[3]->legForwardBackWard(l2 + tiltDelta, -forward * legDelta, 0, 1);
+	legSequance[3]->legForwardBackWard(xi + tiltDelta, -legDelta, 0, forward);
 	legSequance[3]->moveLeg();
 
 	// tilt COM back to the center
@@ -65,6 +69,122 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	setRobotToWorldTrans(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]); // update A_R_W
 
 	// --- end of gait ----
+
+	return SUCCESS;
+}
+
+Result COM::robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec, int side) {
+	Leg* legSequance[4] = { &RfLeg_, &RbLeg_, &LfLeg_, &LbLeg_ };
+	if (side == -1) {
+		legSequance[0] = &LfLeg_; legSequance[1] = &LbLeg_; legSequance[2] = &RfLeg_; legSequance[3] = &RbLeg_;
+	}
+	double tiltDelta = 8; // define how much to tilt COM 
+	double legDelta = crabDelta;
+	vector<double> tiltVec{ -side * tiltDelta, 0, 0, 1 };
+	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
+	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords;
+
+	// ---- start gait -------
+	// tilt COM to the right/left (depends on which side the crab walk is)
+
+	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
+	moveCOM(); 
+	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
+	// move first leg
+	legSequance[0]->legRightLeft(0, xi + tiltDelta, xi + tiltDelta + legDelta, 1);
+	legSequance[0]->moveLeg();
+
+	// move next leg
+	legSequance[1]->legRightLeft(0, xi + tiltDelta, xi + tiltDelta + legDelta, 1);
+	legSequance[1]->moveLeg();
+
+	// push COM to the other side 
+	tiltInRobotCords.setElement(1, 1, side * (legDelta + 2 * tiltDelta));
+	Matrix<double> tiltInWorldCords2 = A_R_W * tiltInRobotCords;
+	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3], tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), COMfinVec[3]);
+	moveCOM();
+	setRobotToWorldTrans(tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), COMfinVec[3]); // update A_R_W
+	// move next leg
+	legSequance[2]->legRightLeft(0, xi + tiltDelta + legDelta, xi + tiltDelta, 1);
+	legSequance[2]->moveLeg();
+
+	// move last leg
+
+	legSequance[3]->legRightLeft(0, xi + tiltDelta + legDelta, xi + tiltDelta, 1);
+	legSequance[3]->moveLeg();
+
+	// move COM to desired final location
+	COMpathFunc(tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), COMfinVec[3], COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]);
+	moveCOM();
+	setRobotToWorldTrans(COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]); // update A_R_W
+
+	// --- end of gait ----
+
+	return SUCCESS;
+}
+
+// the gait that makes the robot turn
+Result COM::robotTurn(double gammaInit, double gammaFin, double currX, double currY, double currZ) {
+	Leg* legSequance[4] = { &LfLeg_, &LbLeg_, &RbLeg_, &RfLeg_ };
+	int aux1 = 1, aux2 = -1;
+	if (gammaFin < gammaInit) {
+		 aux1 = -1, aux2 = 1;
+	}
+
+	double tiltDelta = 8; // define how much to tilt COM 
+	double legDelta = forwardDelta;
+	vector<double> tiltVec{ tiltDelta, 0, 0, 1 };
+	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
+	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords;
+	double xReq13, xReq24, zReq13, zReq24;
+	// calc the required x and z for each leg (legs 1 and 3 have the x and z also 2 and 4)
+	getXYforSpin(gammaFin - gammaInit, xi, zi, xReq13, xReq24, zReq13, zReq24);
+	
+	// ---- start gait -------
+	// tilt COM to the right
+
+	COMpathFunc(currX, currY, currZ, gammaInit, tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit);
+	moveCOM(); 
+	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit);
+	// move first leg
+	legSequance[0]->legTurn(xi + tiltDelta, aux1*xReq13 + tiltDelta, 0, aux2*zReq13);
+	legSequance[0]->moveLeg();
+
+	// move next leg
+	legSequance[1]->legTurn(xi + tiltDelta, aux2*xReq24 + tiltDelta, 0, aux2*zReq24);
+	legSequance[1]->moveLeg();
+
+	// tilt COM to the left 
+	tiltInRobotCords.setElement(1, 1, -2 * tiltDelta);
+	Matrix<double> tiltInWorldCords2 = A_R_W * tiltInRobotCords;
+	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit, tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), gammaInit);
+	moveCOM();
+	setRobotToWorldTrans(tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), gammaInit); // update A_R_W
+	// move next leg
+	legSequance[2]->legTurn(xi + tiltDelta, aux1*xReq13 + tiltDelta, 0, aux1*zReq13);
+	legSequance[2]->moveLeg();
+
+	// move last leg
+	legSequance[3]->legTurn(xi + tiltDelta, aux2*xReq24 + tiltDelta, 0, aux1*zReq24);
+	legSequance[3]->moveLeg();
+
+	// tilt COM back to the center
+	COMpathFunc(tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), gammaInit, currX, currY, currZ, gammaInit);
+	moveCOM();
+	setRobotToWorldTrans(currX, currY, currZ, gammaInit); // update A_R_W
+
+	// spin COM cw/ccw around itself
+	COMpathFunc(currX, currY, currZ, gammaInit, currX, currY, currZ, gammaFin);
+	moveCOM();
+	setRobotToWorldTrans(currX, currY, currZ, gammaFin); // update A_R_W
+	currGamma = gammaFin; // update robot orientation
+
+	// --- end of gait ----
+
+	return SUCCESS;
+
+
+
 
 	return SUCCESS;
 }
@@ -85,6 +205,24 @@ Result COM::moveCOM() {
 	return SUCCESS;
 }
 
+Result COM::setParallelInverseKinematics(double pxDes, double pyDes, double pzDes, double gammaDes) {
+	// ---------- add here work space condition ------------------
+	vector<double> initializeVec1{ -w / 2, H / 2, 0, 1 };
+	vector<double> initializeVec2{ w / 2, H / 2, 0, 1 };
+	vector<double> initializeVec3{ w / 2, -H / 2, 0, 1 };
+	vector<double> initializeVec4{ -w / 2, -H / 2, 0, 1 };
+	last_A_R_W = A_R_W;
+	// calc desired thetas aaccording to parallel inverse kinematics of the robot for each leg
+	calcOneLegParallelInvesrKinematics(&LfLeg_, initializeVec1, pxDes, pyDes, pzDes, gammaDes);
+	cout << "LfLeg thetas:" << endl << LfLeg_.getTheta1() << endl << LfLeg_.getTheta2() << endl << LfLeg_.getTheta3() << endl;
+	calcOneLegParallelInvesrKinematics(&RfLeg_, initializeVec2, pxDes, pyDes, pzDes, gammaDes);
+	cout << "RfLeg thetas:" << endl << RfLeg_.getTheta1() << endl << RfLeg_.getTheta2() << endl << RfLeg_.getTheta3() << endl;
+	calcOneLegParallelInvesrKinematics(&RbLeg_, initializeVec3, pxDes, pyDes, pzDes, gammaDes);
+	cout << "RbLeg thetas:" << endl << RbLeg_.getTheta1() << endl << RbLeg_.getTheta2() << endl << RbLeg_.getTheta3() << endl;
+	calcOneLegParallelInvesrKinematics(&LbLeg_, initializeVec4, pxDes, pyDes, pzDes, gammaDes);
+	cout << "LbLeg thetas:" << endl << LbLeg_.getTheta1() << endl << LbLeg_.getTheta2() << endl << LbLeg_.getTheta3() << endl << endl;
+	return SUCCESS;
+}
 
 Result COM::COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double gammaInit, double cmXfin, double cmYfin, double cmZfin, double gammaFin) {
 	int stepsNum = 10;
@@ -95,39 +233,13 @@ Result COM::COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double g
 	COMzVec.erase(COMzVec.begin(), COMzVec.end());
 	gammaVec.erase(gammaVec.begin(), gammaVec.end());
 	// start path plan
-	COMxVec.push_back(cmXinit);
-	COMyVec.push_back(cmYinit);
-	COMzVec.push_back(cmZinit);
-	gammaVec.push_back(0);
-	for (i = 1; i < stepsNum; i++) {
-		COMxVec.push_back(COMxVec[i - 1] + (cmXfin - cmXinit) / (stepsNum - 1));
-		COMyVec.push_back(COMyVec[i - 1] + (cmYfin - cmYinit) / (stepsNum - 1));
-		COMzVec.push_back(COMzVec[i - 1] + (cmZfin - cmZinit) / (stepsNum - 1));
-		gammaVec.push_back(gammaVec[i - 1] + (gammaFin - gammaInit) / (stepsNum - 1));
-	}
+	linspace(COMxVec, cmXinit, cmXfin, stepsNum);
+	linspace(COMyVec, cmYinit, cmYfin, stepsNum);
+	linspace(COMzVec, cmZinit, cmZfin, stepsNum);
+	linspace(gammaVec, gammaInit, gammaFin, stepsNum);
 	return SUCCESS;
 }
 
-
-
-Result COM::setParallelInverseKinematics(double pxDes, double pyDes, double pzDes, double gammaDes) {
-	// ---------- add here work space condition ------------------
-	vector<double> initializeVec1{ -w / 2, H / 2, 0, 1 };
-	vector<double> initializeVec2{ w / 2, H / 2, 0, 1 };
-	vector<double> initializeVec3{ w / 2, -H / 2, 0, 1 };
-	vector<double> initializeVec4{ -w / 2, -H / 2, 0, 1 };
-	last_A_R_W = A_R_W;
-	// calc desired thetas aaccording to parallel inverse kinematics of the robot for each leg
-	calcOneLegParallelInvesrKinematics(&LfLeg_, initializeVec1, pxDes, pyDes, pzDes, gammaDes); 
-	cout << "LfLeg thetas:" << endl << LfLeg_.getTheta1() << endl << LfLeg_.getTheta2() << endl << LfLeg_.getTheta3() << endl;
-	calcOneLegParallelInvesrKinematics(&RfLeg_, initializeVec2, pxDes, pyDes, pzDes, gammaDes);
-	cout << "RfLeg thetas:" << endl << RfLeg_.getTheta1() << endl << RfLeg_.getTheta2() << endl << RfLeg_.getTheta3() << endl;
-	calcOneLegParallelInvesrKinematics(&RbLeg_, initializeVec3, pxDes, pyDes, pzDes, gammaDes);
-	cout << "RbLeg thetas:" << endl  << RbLeg_.getTheta1() << endl << RbLeg_.getTheta2() << endl << RbLeg_.getTheta3() << endl;
-	calcOneLegParallelInvesrKinematics(&LbLeg_, initializeVec4, pxDes, pyDes, pzDes, gammaDes);
-	cout << "LbLeg thetas:" << endl << LbLeg_.getTheta1() << endl << LbLeg_.getTheta2() << endl << LbLeg_.getTheta3() << endl << endl;
-	return SUCCESS;
-}
 
 // this func calcualets the parallel robot configuration inverse kinematics
 Result COM::calcOneLegParallelInvesrKinematics(Leg* currLeg, vector<double>& CMtoShValues,double pxDes, double pyDes, double pzDes, double gammaDes) {
@@ -192,4 +304,39 @@ Result COM::setRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamm
 	return SUCCESS;
 }
 
+Result COM::getXYforSpin(double gamma, double currX, double currZ, double& xReq13, double& xReq24, double& zReq13, double& zReq24) {
+	double length = 0, width = 0, a1 = 0, b1 = 0, c1 = 0, a2 = 0, b2 = 0, c2 = 0, x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0;
+	double gammaAux = abs(gamma); // in case gamma is negative because the robot turns cw
+	length = H + 2 * abs(currZ);
+	width = w + 2 * abs(currX);
+
+	b1 = atan2(width / 2, length / 2);
+	c1 = (PI - gammaAux) / 2;
+	a1 = c1 - b1;
+	z1 = sqrt(pow(length, 2) + pow(width, 2)) * sin(gammaAux / 2);
+	y1 = z1 * cos(a1);
+	x1 = z1 * sin(a1) + currX;
+
+	b2 = atan2(length / 2, width / 2);
+	c2 = (PI - gammaAux) / 2;
+	a2 = c2 - b2;
+	z2 = sqrt(pow(length, 2) + pow(width, 2)) * sin(gammaAux / 2);
+	x2 = z2 * cos(a2) - currX; // lengthowidth muclength to spin in x
+	y2 = z2 * sin(a2);
+
+	if (gamma > 0) {
+		xReq13 = x1;
+		zReq13 = y1;
+		xReq24 = x2;
+		zReq24 = y2;
+	}
+	else // if the robot turns in cw direction
+	{
+		xReq13 = x2;
+		zReq13 = y2;
+		xReq24 = x1;
+		zReq24 = y1;
+	}
+	return SUCCESS;
+}
 COM::~COM() {}

@@ -3,12 +3,14 @@
 
 #include <vector>
 #include <math.h>
+#include <fstream>
 #include "GenericMatrix.H"
 #include "Definitions.H"
 #include "LfLeg.H"
 #include "RfLeg.H"
 #include "RbLeg.H"
 #include "LbLeg.H"
+
 
 class COM {
 public:
@@ -27,11 +29,13 @@ public:
 	// crab walk mode (side = 1 for right movement and -1 for left)
 	Result robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec ,int side);
 	// turning the robot around itself (1 for +z and -1 for -z)
-	Result robotTurn(int direction);
+	Result robotTurn(double gammaInit, double gammaFin, double currX, double currY, double currZ);
 	// this func is for creating robot to world transform matrix
 	Result setRobotToWorldTrans(double cmX, double cmY, double cmZ, double gamma);
 	// this func caculates the inverse of a transformation matrix
 	Result getAinv(Matrix<double>* Ain);
+	// calc needed x and y for the legs for a given gamma
+	Result getXYforSpin(double gamma, double currX, double currZ, double& xReq13, double& xReq24, double& zReq13, double& zReq24);
 	// dtor
 	~COM();
 protected:

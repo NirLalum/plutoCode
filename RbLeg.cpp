@@ -42,6 +42,10 @@ Result RbLeg::legRightLeft(double zInit, double xInit, double xFin, int side) {
     return Leg::legRightLeft(-zInit, -xInit, -xFin, side);
 }
 
+Result RbLeg::legTurn(double xInit, double xFin, double zInit, double zFin) {
+    return Leg::legTurn(-xInit, -xFin, -zInit, -zFin);
+}
+
 void RbLeg::print(ostream& co) {
     co << "theta1:" << getTheta1() << endl << "theta2:" << getTheta2() << endl << "theta3:" << getTheta3() << endl << endl;
 }

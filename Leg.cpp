@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdlib.h>
 #include "Leg.H"
 #include "Definitions.H"
  
@@ -36,7 +37,7 @@ void Leg::setCurrentLocation(double x, double y, double z) {
 Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
 	int flag = 0;
-	if (z0 > zf) {
+	if (abs(z0) > abs(zf)) {
 		double tmp = z0;
 		z0 = zf;
 		zf = tmp;
@@ -49,7 +50,7 @@ Result Leg::pathFunc(double z0, double zf) {
 	y0 = 30;
 	yf = 30;
 	yMax = 25;
-	zMax = zf / 2;
+	zMax = (zf + z0) / 2;
 	v0 = 0;
 	vf = 0;
 	a0 = 0;
@@ -64,7 +65,9 @@ Result Leg::pathFunc(double z0, double zf) {
 	// output polycoefs
 	g = (y0 * zMax - yMax * z0 - y0 * zf + yf * z0 + yMax * zf - yf * zMax) / ((z0 - zf) * (z0 * zMax - z0 * zf + zMax * zf - pow(zMax, 2)));
 	h = -(y0 * pow(zMax, 2) - yMax * pow(z0, 2) - y0 * pow(zf, 2) + yf * pow(z0, 2) + yMax * pow(zf, 2) - yf * pow(zMax, 2)) / ((z0 - zf) * (z0 * zMax - z0 * zf + zMax * zf - pow(zMax, 2)));
-	i = (y0 * pow(zf, 2) + yf * pow(z0, 2) - 2 * z0 * zf * sqrt((y0 - yMax) * (yf - yMax)) - 2 * yMax * z0 * zf) / (pow(z0, 2) - 2 * z0 * zf + pow(zf, 2));
+	double i2 = 0;
+    i = (y0 * pow(zf, 2) + yf * pow(z0, 2) + 2 * z0 * zf * sqrt(-(y0 - yMax) * (yMax - yf)) - 2 * yMax * z0 * zf) / (pow(z0, 2) - 2 * z0 * zf + pow(zf, 2));
+	i2 = (y0 * pow(zf, 2) + yf * pow(z0, 2) - 2 * z0 * zf * sqrt((y0 - yMax) * (yf - yMax)) - 2 * yMax * z0 * zf) / (pow(z0, 2) - 2 * z0 * zf + pow(zf, 2));
 
 	for (double t = t0; t <= tf; t+= delta) {
 		inValue = a * pow(t, 5) + b * pow(t, 4) + c * pow(t, 3) + d * pow(t, 2) + e * t + f;
@@ -88,12 +91,22 @@ Result Leg::legForwardBackWard(double xInit, double zInit, double zFin, int forw
 	return SUCCESS;
 }
 
+
 Result Leg::legRightLeft(double zInit, double xInit, double xFin, int side) {
 	pathFunc(xInit, side * xFin);
 	int size = yVec.size();
+	xVec = zVec;
+	zVec.erase(zVec.begin(), zVec.end());
 	for (int i = 0; i < size; i++) {
 		zVec.push_back(zInit);
 	}
+	return SUCCESS;
+}
+
+Result Leg::legTurn(double xInit, double xFin, double zInit, double zFin) {
+	pathFunc(zInit, zFin);
+	int stepsNum = yVec.size();
+	linspace(xVec, xInit, xFin, stepsNum);
 	return SUCCESS;
 }
 
@@ -106,10 +119,16 @@ Result Leg::moveLeg() {
 		// implement here some kind of control func
 		int i = 1;
 		// update current location of the leg ------------------------------ (mean while not real values)
-		CurrLocation.setElement(1, 1, xVec[index]);
-		CurrLocation.setElement(2, 1, yVec[index]);
-		CurrLocation.setElement(3, 1, zVec[index]);
+		if (index == xVec.size() - 1) {
+			CurrLocation.setElement(1, 1, xVec[index]);
+			CurrLocation.setElement(2, 1, yVec[index]);
+			CurrLocation.setElement(3, 1, zVec[index]);
+		}
 	}
+	// end of step => earse path vectors
+	xVec.erase(xVec.begin(), xVec.end());
+	yVec.erase(yVec.begin(), yVec.end());
+	zVec.erase(zVec.begin(), zVec.end());
 	return SUCCESS;
 }
 

@@ -14,6 +14,7 @@ public:
 	// for crabWalk:
 	// 1 for right, -1 for left
 	Result legRightLeft(double zInit, double xInit, double xFin, int side);
+	Result legTurn(double xInit, double xFin, double zInit, double zFin);
 	void print(ostream& co);
 	~RbLeg();
 protected:
