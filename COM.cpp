@@ -339,4 +339,13 @@ Result COM::getXYforSpin(double gamma, double currX, double currZ, double& xReq1
 	}
 	return SUCCESS;
 }
+
+Matrix<double>& COM::getA_R_W(){
+	return A_R_W;
+}
+
+double COM::getCurrGamma() const {
+	return currGamma;
+}
+
 COM::~COM() {}

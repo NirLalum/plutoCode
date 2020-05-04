@@ -12,7 +12,7 @@ RfLeg::RfLeg() : Leg() {
     {
         cout<< "error in Rfleg ctor: " << Error.what() << endl;
     }
-    A_leg_R.printMatrix();
+    //A_leg_R.printMatrix();
 }
 
 Result RfLeg::setInverseKinematics(double px, double py, double pz) {

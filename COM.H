@@ -36,6 +36,8 @@ public:
 	Result getAinv(Matrix<double>* Ain);
 	// calc needed x and y for the legs for a given gamma
 	Result getXYforSpin(double gamma, double currX, double currZ, double& xReq13, double& xReq24, double& zReq13, double& zReq24);
+	Matrix<double>& getA_R_W();
+	double getCurrGamma() const;
 	// dtor
 	~COM();
 protected:

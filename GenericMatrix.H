@@ -184,6 +184,7 @@ public:
 		return solMat;
 	}
 
+	// not defined yet
 	Matrix<T> operator*(vector<T>& srcVector) {
 		Matrix<T> solMat;
 		return solMat;

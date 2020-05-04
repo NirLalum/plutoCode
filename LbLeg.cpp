@@ -13,7 +13,7 @@ LbLeg::LbLeg() : Leg() {
         cout << "error in Lbleg ctor: " << Error.what() << endl;
     }
     
-    A_leg_R.printMatrix();
+    //A_leg_R.printMatrix();
 }
 
 Result LbLeg::setInverseKinematics(double px, double py, double pz) {
