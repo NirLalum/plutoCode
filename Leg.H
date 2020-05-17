@@ -39,7 +39,7 @@ public:
 	// move a leg according to a pre made path (only when one leg in moving' not in parallel moving)
 	Result moveLeg();
 	// moves leg according to pre made pathes (convert xyz to thetas)
-	Result nextMove();
+	int nextMove();
 	virtual void print(ostream& co) = 0;
 	// get leg to robot transformation matrix
 	Matrix<double>& getA_leg_R();

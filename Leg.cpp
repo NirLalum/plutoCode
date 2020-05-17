@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "Leg.H"
 #include "Definitions.H"
- 
+#include "GeneralFunctions.H"
 
 Leg::Leg() : theta1_(theta1Init), theta2_(theta2Init), theta3_(theta3Init) {}
 
@@ -83,7 +83,7 @@ Result Leg::pathFunc(double z0, double zf) {
 }
 
 Result Leg::legForwardBackWard(double xInit, double zInit, double zFin, int forward) {
-	pathFunc(zInit, forward * zFin);
+	pathFunc(forward*zInit, forward * zFin);
 	int size = yVec.size();
 	for (int i = 0; i < size; i++) {
 		xVec.push_back(xInit);
@@ -112,8 +112,10 @@ Result Leg::legTurn(double xInit, double xFin, double zInit, double zFin) {
 
 Result Leg::moveLeg() {
 	int index = 0;
+	cout << "start leg movement:" << endl << endl;
 	for (index; index < xVec.size(); index++) {
 		setInverseKinematics(xVec[index], yVec[index], zVec[index]);
+		cout << getTheta1() << endl << getTheta2() << endl << getTheta3() << endl;
 		// send inverse kinematics data to arduino ----------------------------
 		nextMove();
 		// implement here some kind of control func
@@ -132,9 +134,16 @@ Result Leg::moveLeg() {
 	return SUCCESS;
 }
 
-Result Leg::nextMove() {
-	// -- implement here a function that send desired thetas to arduino
-	return SUCCESS;
+int Leg::nextMove() {
+	// send and retrieve data from arduino
+	vector<double> sendData{ theta1_, theta2_, theta3_ };
+	vector<double> retrievedData;
+	try { retrievedData = serialComunication(sendData);}
+	catch (const char* error) { cout << error << endl;}
+	///// ---------------- implement here logical control ----------------
+
 }
+
+	
 
 Leg::~Leg(){}
