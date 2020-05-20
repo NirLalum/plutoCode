@@ -12,7 +12,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 This is a licence-free software, it can be used by anyone who try to build a better world.
  */
 
-#include "serialib.h"
+#include "serialib.H"
 
 
 
@@ -191,7 +191,7 @@ char serialib::openDevice(const char *Device,const unsigned int Bauds)
     case 57600 :    Speed=B57600; break;
     case 115200 :   Speed=B115200; break;
     default : return -4;
-    }    
+    }
     // Set the baud rate
     cfsetispeed(&options, Speed);
     cfsetospeed(&options, Speed);
@@ -598,7 +598,7 @@ char serialib::flushReceiver()
     \return The number of bytes received by the serial provider but not yet read.
 */
 int serialib::available()
-{    
+{
 #if defined (_WIN32) || defined(_WIN64)
     // Device errors
     DWORD commErrors;

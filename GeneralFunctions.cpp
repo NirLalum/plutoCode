@@ -11,38 +11,41 @@ Result linspace(vector<double>& Vec, double InitVal, double FinVal, int stepsNum
 }
 
 // sending data and retrieving data (raspberypi <-> arduino)
-vector<double> serialComunication(vector<double> thetasDouble) {
+Result serialComunication(vector<double> thetasDouble, serialib& serial) {
 #ifdef __linux__
 #define SERIAL_PORT "/dev/ttyACM0"
 #endif
+
 
 	// convert double type data to string so we can send it over serial comunication
 	vector<string> sendThetasStr;
 	int i = 0;
 	for (i = 0; i < thetasDouble.size(); i++) {
 		sendThetasStr.push_back(to_string(thetasDouble[i]));
+
 	}
 
-	// Serial object
-	serialib serial;
-
-	// Connection to serial port
-	char errorOpening = serial.openDevice(SERIAL_PORT, 115200);
-	// If connection fails, return the error code otherwise, display a success message
-	if (errorOpening != 1) return errorOpening;
-	printf("Successful connection to %s\n", SERIAL_PORT);
 
 	// send data to arduino
+	cout << "start sending data" << endl;
+	usleep(100000); // wait 0.1 second before sending new data
 	for (i = 0; i < sendThetasStr.size(); i++) {
 		if (!serial.writeString(sendThetasStr[i].c_str())) throw "faild to send data to arduino";
-		usleep(1000); //wait before sending the next theta
+        serial.writeChar('\n');
+		cout << sendThetasStr[i].c_str() << endl;
+
 	}
-	
+
+    cout << "done seding data" << endl;
+    //usleep(1000); //wait before sending the next theta
 	// retrieve data from arduino
 	vector<double> realThetasRetrieved;
 	char buffer[10];
 	char recievedString[10] = "";
+	char ArduinoFeedback = '0';
 	// Display ASCII characters (from 32 to 128)
+
+	/*cout << "start retrieving data" << endl;
 	while (1)
 	{
 		if (serial.readString(recievedString, '\0', 10, 1000) > 0){ ////////////// -------------- we need to define the size of the retrieved data.
@@ -54,7 +57,11 @@ vector<double> serialComunication(vector<double> thetasDouble) {
 		}
 		//usleep(1000);
 	}
+	cout << "done retrieving data" << endl; */
 	// Close the serial device
-	serial.closeDevice();
-	return realThetasRetrieved;
+    //serial.readString(recievedString, '\0', 3, 10000);
+
+	cout << "arduino feedback: " << recievedString << endl;
+	if(recievedString[0] == 'O') return SUCCESS;
+	else throw "comunication error!";
 }

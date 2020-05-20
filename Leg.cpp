@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <algorithm>
 #include "Leg.H"
 #include "Definitions.H"
 #include "GeneralFunctions.H"
@@ -33,7 +34,7 @@ void Leg::setCurrentLocation(double x, double y, double z) {
 	CurrLocation.setElement(3, 1, z);
 }
 
-// this function creates a yz path for a leg 
+// this function creates a yz path for a leg
 Result Leg::pathFunc(double z0, double zf) {
 	// a b c d e f g h i are the input and output (z/x and y) poly coefs (and their symbolic value was calculated in matlab)
 	int flag = 0;
@@ -111,13 +112,22 @@ Result Leg::legTurn(double xInit, double xFin, double zInit, double zFin) {
 }
 
 Result Leg::moveLeg() {
+	#ifdef __linux__
+    #define SERIAL_PORT "/dev/ttyACM0"
+    #   endif
 	int index = 0;
 	cout << "start leg movement:" << endl << endl;
+    serialib serial;
+    char errorOpening = serial.openDevice(SERIAL_PORT, 9600);
+    // If connection fails, return the error code otherwise, display a success message
+    if (errorOpening!=1) throw "serial openning faild";
+	usleep(10000000); // 10 seconds in micro seconds. gives us time to open the serial monitor.
 	for (index; index < xVec.size(); index++) {
+
 		setInverseKinematics(xVec[index], yVec[index], zVec[index]);
-		cout << getTheta1() << endl << getTheta2() << endl << getTheta3() << endl;
+		//cout << getTheta1() << endl << getTheta2() << endl << getTheta3() << endl;
 		// send inverse kinematics data to arduino ----------------------------
-		nextMove();
+		nextMove(serial);
 		// implement here some kind of control func
 		int i = 1;
 		// update current location of the leg ------------------------------ (mean while not real values)
@@ -127,6 +137,7 @@ Result Leg::moveLeg() {
 			CurrLocation.setElement(3, 1, zVec[index]);
 		}
 	}
+	serial.closeDevice();
 	// end of step => earse path vectors
 	xVec.erase(xVec.begin(), xVec.end());
 	yVec.erase(yVec.begin(), yVec.end());
@@ -134,16 +145,14 @@ Result Leg::moveLeg() {
 	return SUCCESS;
 }
 
-int Leg::nextMove() {
+int Leg::nextMove(serialib& serial) {
 	// send and retrieve data from arduino
 	vector<double> sendData{ theta1_, theta2_, theta3_ };
 	vector<double> retrievedData;
-	try { retrievedData = serialComunication(sendData);}
+	try { serialComunication(sendData, serial);}
 	catch (const char* error) { cout << error << endl;}
 	///// ---------------- implement here logical control ----------------
 
 }
-
-	
 
 Leg::~Leg(){}

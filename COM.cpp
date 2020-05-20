@@ -15,13 +15,13 @@ COM::COM() : currGamma(0) {
 
 // this function moves the robot forward and backward and updated each time the POSE of the robot
 Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COMfinVec, int forward) {
-	
+
 	Leg* legSequance[4] = { &LfLeg_, &RfLeg_, &LbLeg_, &RbLeg_ };
 	if (forward == -1) {
 		legSequance[0] = &LbLeg_; legSequance[1] = &RbLeg_; legSequance[2] = &LfLeg_; legSequance[3] = &RfLeg_;
 	}
-	
-	double tiltDelta = 8; // define how much to tilt COM 
+
+	double tiltDelta = 8; // define how much to tilt COM
 	double legDelta = forwardDelta;
 	vector<double> tiltVec{ tiltDelta, 0, 0, 1 };
 	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
@@ -29,7 +29,7 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 
 	// ---- start gait -------
 	// tilt COM to the right // OK
-	 
+
 	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
 	moveCOM(); // ------------------ not defined yet ---------------------
 	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
@@ -78,7 +78,7 @@ Result COM::robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec,
 	if (side == -1) {
 		legSequance[0] = &LfLeg_; legSequance[1] = &LbLeg_; legSequance[2] = &RfLeg_; legSequance[3] = &RbLeg_;
 	}
-	double tiltDelta = 8; // define how much to tilt COM 
+	double tiltDelta = 8; // define how much to tilt COM
 	double legDelta = crabDelta;
 	vector<double> tiltVec{ -side * tiltDelta, 0, 0, 1 };
 	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
@@ -88,7 +88,7 @@ Result COM::robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec,
 	// tilt COM to the right/left (depends on which side the crab walk is)
 
 	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
-	moveCOM(); 
+	moveCOM();
 	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3]);
 	// move first leg
 	legSequance[0]->legRightLeft(0, xi + tiltDelta, xi + tiltDelta + legDelta, 1);
@@ -98,7 +98,7 @@ Result COM::robotCrabWalk(vector<double>& COMinitVec, vector<double>& COMfinVec,
 	legSequance[1]->legRightLeft(0, xi + tiltDelta, xi + tiltDelta + legDelta, 1);
 	legSequance[1]->moveLeg();
 
-	// push COM to the other side 
+	// push COM to the other side
 	tiltInRobotCords.setElement(1, 1, side * (legDelta + 2 * tiltDelta));
 	Matrix<double> tiltInWorldCords2 = A_R_W * tiltInRobotCords;
 	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), COMfinVec[3], tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), COMfinVec[3]);
@@ -131,7 +131,7 @@ Result COM::robotTurn(double gammaInit, double gammaFin, double currX, double cu
 		 aux1 = -1, aux2 = 1;
 	}
 
-	double tiltDelta = 8; // define how much to tilt COM 
+	double tiltDelta = 8; // define how much to tilt COM
 	double legDelta = forwardDelta;
 	vector<double> tiltVec{ tiltDelta, 0, 0, 1 };
 	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
@@ -139,12 +139,12 @@ Result COM::robotTurn(double gammaInit, double gammaFin, double currX, double cu
 	double xReq13, xReq24, zReq13, zReq24;
 	// calc the required x and z for each leg (legs 1 and 3 have the x and z also 2 and 4)
 	getXYforSpin(gammaFin - gammaInit, xi, zi, xReq13, xReq24, zReq13, zReq24);
-	
+
 	// ---- start gait -------
 	// tilt COM to the right
 
 	COMpathFunc(currX, currY, currZ, gammaInit, tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit);
-	moveCOM(); 
+	moveCOM();
 	setRobotToWorldTrans(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit);
 	// move first leg
 	legSequance[0]->legTurn(xi + tiltDelta, aux1*xReq13 + tiltDelta, 0, aux2*zReq13);
@@ -154,7 +154,7 @@ Result COM::robotTurn(double gammaInit, double gammaFin, double currX, double cu
 	legSequance[1]->legTurn(xi + tiltDelta, aux2*xReq24 + tiltDelta, 0, aux2*zReq24);
 	legSequance[1]->moveLeg();
 
-	// tilt COM to the left 
+	// tilt COM to the left
 	tiltInRobotCords.setElement(1, 1, -2 * tiltDelta);
 	Matrix<double> tiltInWorldCords2 = A_R_W * tiltInRobotCords;
 	COMpathFunc(tiltInWorldCords.getElement(1, 1), tiltInWorldCords.getElement(2, 1), tiltInWorldCords.getElement(3, 1), gammaInit, tiltInWorldCords2.getElement(1, 1), tiltInWorldCords2.getElement(2, 1), tiltInWorldCords2.getElement(3, 1), gammaInit);
@@ -197,10 +197,10 @@ Result COM::moveCOM() {
 	for (i; i < COMxVec.size(); i++) {
 		setParallelInverseKinematics(COMxVec[i], COMyVec[i], COMzVec[i], gammaVec[i]);
 		// send desired thetas to arduino
-		LfLeg_.nextMove();
-		RfLeg_.nextMove();
-		RbLeg_.nextMove();
-		LbLeg_.nextMove();
+		//LfLeg_.nextMove(); // --------------- need to send here a serial
+		//RfLeg_.nextMove();
+		//RbLeg_.nextMove();
+		//LbLeg_.nextMove();
 	}
 	return SUCCESS;
 }
@@ -243,7 +243,7 @@ Result COM::COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double g
 
 // this func calcualets the parallel robot configuration inverse kinematics
 Result COM::calcOneLegParallelInvesrKinematics(Leg* currLeg, vector<double>& CMtoShValues,double pxDes, double pyDes, double pzDes, double gammaDes) {
-	
+
 	//define vectors from com to the leg shoulder
 	Matrix<double>  CMtoSh(4, 1, CMtoShValues);
 	// define each foot location relative to the world
