@@ -16,4 +16,4 @@ a - spin CCW
 
 t - terminate software
 
----notice: make sure caps lock is off 
+notice: make sure caps lock is off 
