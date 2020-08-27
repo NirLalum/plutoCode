@@ -26,11 +26,15 @@ int main() {
 	while (KeyBoardInput != 't') {
 		switch (KeyBoardInput) {
 		// move forward
+		case 'i': {
+                    robotCOM.initialRobot();
+                    break;
+                }
 		case 'w': { CurrComPos = robotCOM.getA_R_W().sliceMatrix(1, 4, 4, 4); // calc current location relative to the world
 					// desired location relative to the robot
 					DesComPosRelativeToRobot.setElement(1, 1, 0); DesComPosRelativeToRobot.setElement(2, 1, ForwardDelta); DesComPosRelativeToRobot.setElement(3, 1, 0); DesComPosRelativeToRobot.setElement(4, 1, 1);
 					DesComPos = robotCOM.getA_R_W() * DesComPosRelativeToRobot;// calc desired location relative to the world
-					vector<double> VectorInit{ CurrComPos.getElement(1,1), CurrComPos.getElement(2,1), CurrComPos.getElement(3,1), robotCOM.getCurrGamma()}; 
+					vector<double> VectorInit{ CurrComPos.getElement(1,1), CurrComPos.getElement(2,1), CurrComPos.getElement(3,1), robotCOM.getCurrGamma()};
 					vector<double> VectorFin{ DesComPos.getElement(1,1), DesComPos.getElement(2,1), DesComPos.getElement(3,1), robotCOM.getCurrGamma()};
 					robotCOM.robotBackwardForward(VectorInit, VectorFin, 1); // move robot
 					break;
@@ -79,5 +83,5 @@ int main() {
 		cin >> KeyBoardInput;
 	}
 	return 0;
-}	
+}
 

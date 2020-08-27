@@ -11,7 +11,7 @@ Result linspace(vector<double>& Vec, double InitVal, double FinVal, int stepsNum
 }
 
 // sending data and retrieving data (raspberypi <-> arduino)
-Result serialComunication(vector<double> thetasDouble, serialib& serial) {
+Result serialComunication(vector<double> thetasDouble, char LegNum, serialib& serial, int Rate) {
 #ifdef __linux__
 #define SERIAL_PORT "/dev/ttyACM0"
 #endif
@@ -20,20 +20,23 @@ Result serialComunication(vector<double> thetasDouble, serialib& serial) {
 	// convert double type data to string so we can send it over serial comunication
 	vector<string> sendThetasStr;
 	int i = 0;
+	// convert double array to string
 	for (i = 0; i < thetasDouble.size(); i++) {
 		sendThetasStr.push_back(to_string(thetasDouble[i]));
-
 	}
-
 
 	// send data to arduino
 	cout << "start sending data" << endl;
-	usleep(100000); // wait 0.1 second before sending new data
+	usleep(10000000/Rate); // Rate was 1000 and its good for parallel movement. wait between each message
+	// send leg number id first: (1 = lf, 2 = rf, 3 = rb, 4 = lb )
+	//serial.writeChar(state);
+	//serial.writeChar('\n');
+	serial.writeChar(LegNum);
+	serial.writeChar('\n');
 	for (i = 0; i < sendThetasStr.size(); i++) {
 		if (!serial.writeString(sendThetasStr[i].c_str())) throw "faild to send data to arduino";
-        serial.writeChar('\n');
+        serial.writeChar('\n'); // check if works without this line
 		cout << sendThetasStr[i].c_str() << endl;
-
 	}
 
     cout << "done seding data" << endl;
@@ -61,7 +64,8 @@ Result serialComunication(vector<double> thetasDouble, serialib& serial) {
 	// Close the serial device
     //serial.readString(recievedString, '\0', 3, 10000);
 
-	cout << "arduino feedback: " << recievedString << endl;
-	if(recievedString[0] == 'O') return SUCCESS;
-	else throw "comunication error!";
+	//cout << "arduino feedback: " << recievedString << endl;
+	//if(recievedString[0] == 'O') return SUCCESS;
+	//else throw "comunication error!";
+	return SUCCESS;
 }

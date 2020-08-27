@@ -4,13 +4,13 @@
 
 #define PI 3.1415926535897
 
-// linkages size defintion (cm) 
-#define l1  6.63
+// linkages size defintion (cm)
+#define l1  8.5 // was 6.63
 #define l2  8.57
 #define l3  26
 #define l4  26
 
-// robot's width and length (cm) 
+// robot's width and length (cm)
 #define H  52.8
 #define w  22.8
 
@@ -20,7 +20,7 @@
 #define theta3Init  0
 
 // movements deltas (cm,rad)
-#define forwardDelta  30;
+#define forwardDelta  20; // was 30
 #define crabDelta 10;
 #define spinDelta PI/10;
 

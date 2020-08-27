@@ -16,7 +16,7 @@ using namespace std;
 
 Result linspace(vector<double>& Vec, double InitVal, double FinVal ,int stepsNum);
 // sending data and retrieving data (raspberypi <-> arduino)
-Result serialComunication(vector<double> thetasDouble, serialib& serial);
+Result serialComunication(vector<double> thetasDouble, char LegNum,serialib& serial, int Rate);
 
 #endif // !GeneralFunctions_H
 

@@ -15,7 +15,7 @@ using namespace std;
 
 // define consts for initial position of each leg (relative to the shoulder)
 # define xi l2
-# define yi 30
+# define yi 40
 # define zi 0
 
 
@@ -39,7 +39,7 @@ public:
 	// move a leg according to a pre made path (only when one leg in moving' not in parallel moving)
 	Result moveLeg();
 	// moves leg according to pre made pathes (convert xyz to thetas)
-	int nextMove(serialib& serial);
+	int nextMove(serialib& serial, int Rate);
 	virtual void print(ostream& co) = 0;
 	// get leg to robot transformation matrix
 	Matrix<double>& getA_leg_R();
@@ -52,6 +52,7 @@ protected:
 	double theta1_;
 	double theta2_;
 	double theta3_;
+	char LegNum_;
 	vector <double> xVec;
 	vector <double> yVec;
 	vector <double> zVec;

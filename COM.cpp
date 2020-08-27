@@ -13,6 +13,37 @@ COM::COM() : currGamma(0) {
 	//A_R_W.printMatrix();
 }
 
+Result COM::initialRobot(){
+    cout << "go initial position" << endl;
+    Leg* legSequance[4] = { &LfLeg_, &RfLeg_, &LbLeg_, &RbLeg_ };
+    vector<double> path;
+    double InitHeight = 17;
+    double FinHeight = yi; // zi = 30
+    int steps = 20;
+    linspace(path, InitHeight, FinHeight, steps); // build path
+    #ifdef __linux__
+	#define SERIAL_PORT "/dev/ttyACM0"
+	#   endif
+	cout << "start leg movement:" << endl << endl;
+	serialib serialInit;
+	char errorOpening = serialInit.openDevice(SERIAL_PORT, 115200);
+	int Rate = 1000; // the rate of messages sending (for serial communication function)
+    int i = 0;
+    for(i = 0; i<path.size(); i++){
+        // get thetas from xyz
+        legSequance[0]->setInverseKinematics(-xi, path[i], zi);
+        legSequance[1]->setInverseKinematics(xi, path[i], zi);
+        legSequance[2]->setInverseKinematics(xi, path[i], -zi);
+        legSequance[3]->setInverseKinematics(-xi, path[i], -zi);
+        // send data to arduino
+		LfLeg_.nextMove(serialInit, Rate);
+		RfLeg_.nextMove(serialInit, Rate);
+		RbLeg_.nextMove(serialInit, Rate);
+		LbLeg_.nextMove(serialInit, Rate);
+    }
+    return SUCCESS;
+}
+
 // this function moves the robot forward and backward and updated each time the POSE of the robot
 Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COMfinVec, int forward) {
 
@@ -23,9 +54,9 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 
 	double tiltDelta = 8; // define how much to tilt COM
 	double legDelta = forwardDelta;
-	vector<double> tiltVec{ tiltDelta, 0, 0, 1 };
-	Matrix<double> tiltInRobotCords(4, 1, tiltVec);
-	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords;
+	vector<double> tiltVec{ tiltDelta, 0, 0, 1 }; // relative to the robot
+	Matrix<double> tiltInRobotCords(4, 1, tiltVec); // relative to the robot
+	Matrix<double> tiltInWorldCords = A_R_W * tiltInRobotCords; // transform to world cords
 
 	// ---- start gait -------
 	// tilt COM to the right // OK
@@ -44,7 +75,8 @@ Result COM::robotBackwardForward(vector<double>& COMinitVec, vector<double>& COM
 	// move next leg
 	legSequance[1]->legForwardBackWard(xi, 0, legDelta, forward);
 	legSequance[1]->moveLeg();
-
+    // put delay here
+    usleep(1000000);
 	// push COM forward/backwawrds // OK
 	COMpathFunc(COMinitVec[0], COMinitVec[1], COMinitVec[2], COMinitVec[3], COMfinVec[0], COMfinVec[1], COMfinVec[2], COMfinVec[3]);
 	moveCOM();
@@ -192,15 +224,22 @@ Result COM::robotTurn(double gammaInit, double gammaFin, double currX, double cu
 
 // this function moves the center of mass of the robot
 Result COM::moveCOM() {
-	int i = 1;
 	cout << endl << "start com movement:" << endl << endl;
+	#ifdef __linux__
+	#define SERIAL_PORT "/dev/ttyACM0"
+	#   endif
+	cout << "start leg movement:" << endl << endl;
+	int i = 1;
+	int Rate = 1000; // for serial comunication function
+	serialib serialCOM;
+	char errorOpening = serialCOM.openDevice(SERIAL_PORT, 115200);
 	for (i; i < COMxVec.size(); i++) {
 		setParallelInverseKinematics(COMxVec[i], COMyVec[i], COMzVec[i], gammaVec[i]);
 		// send desired thetas to arduino
-		//LfLeg_.nextMove(); // --------------- need to send here a serial
-		//RfLeg_.nextMove();
-		//RbLeg_.nextMove();
-		//LbLeg_.nextMove();
+		LfLeg_.nextMove(serialCOM, Rate);
+		RfLeg_.nextMove(serialCOM, Rate);
+		RbLeg_.nextMove(serialCOM, Rate);
+		LbLeg_.nextMove(serialCOM, Rate);
 	}
 	return SUCCESS;
 }
@@ -225,7 +264,7 @@ Result COM::setParallelInverseKinematics(double pxDes, double pyDes, double pzDe
 }
 
 Result COM::COMpathFunc(double cmXinit, double cmYinit, double cmZinit, double gammaInit, double cmXfin, double cmYfin, double cmZfin, double gammaFin) {
-	int stepsNum = 10;
+	int stepsNum = 20;
 	int i = 0;
 	// deleting previous pathes
 	COMxVec.erase(COMxVec.begin(), COMxVec.end());
@@ -263,7 +302,7 @@ Result COM::calcOneLegParallelInvesrKinematics(Leg* currLeg, vector<double>& CMt
 	// setting the desired angles for each leg motors
 	// ------------------- add here some try and catch for leg workspace ----------------------------
 	currLeg->setInverseKinematics(S.getElement(1, 1), S.getElement(2, 1), S.getElement(3, 1));
-	// update leg current pos
+	// update leg current pos (not real values for now)
 	currLeg->setCurrentLocation(S.getElement(1, 1), S.getElement(2, 1), S.getElement(3, 1));
 	return SUCCESS;
 }

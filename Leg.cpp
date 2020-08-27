@@ -47,10 +47,10 @@ Result Leg::pathFunc(double z0, double zf) {
 	double a, b, c, d, e, f, g, h, i, delta, t0, y0, yf, yMax, zMax, tf, v0, vf, a0, af, inValue, outValue;
 	delta = 0.01; // determines the time step
 	t0 = 0;
-	tf = 0.1;
-	y0 = 30;
-	yf = 30;
-	yMax = 25;
+	tf = 1;// ---------- was 0.1
+	y0 = yi;
+	yf = yi;
+	yMax = yi-10;
 	zMax = (zf + z0) / 2;
 	v0 = 0;
 	vf = 0;
@@ -118,16 +118,17 @@ Result Leg::moveLeg() {
 	int index = 0;
 	cout << "start leg movement:" << endl << endl;
     serialib serial;
-    char errorOpening = serial.openDevice(SERIAL_PORT, 9600);
+    char errorOpening = serial.openDevice(SERIAL_PORT, 115200);
     // If connection fails, return the error code otherwise, display a success message
     if (errorOpening!=1) throw "serial openning faild";
-	usleep(10000000); // 10 seconds in micro seconds. gives us time to open the serial monitor.
+	usleep(1000000); // delay between each leg whole movement
+	int Rate = 500;  // the rate for chain movement (for serial communication function)
 	for (index; index < xVec.size(); index++) {
 
-		setInverseKinematics(xVec[index], yVec[index], zVec[index]);
 		//cout << getTheta1() << endl << getTheta2() << endl << getTheta3() << endl;
+		setInverseKinematics(xVec[index], yVec[index], zVec[index]);
 		// send inverse kinematics data to arduino ----------------------------
-		nextMove(serial);
+		nextMove(serial, Rate);
 		// implement here some kind of control func
 		int i = 1;
 		// update current location of the leg ------------------------------ (mean while not real values)
@@ -145,11 +146,11 @@ Result Leg::moveLeg() {
 	return SUCCESS;
 }
 
-int Leg::nextMove(serialib& serial) {
+int Leg::nextMove(serialib& serial, int Rate) {
 	// send and retrieve data from arduino
 	vector<double> sendData{ theta1_, theta2_, theta3_ };
 	vector<double> retrievedData;
-	try { serialComunication(sendData, serial);}
+	try { serialComunication(sendData, LegNum_, serial, Rate);}
 	catch (const char* error) { cout << error << endl;}
 	///// ---------------- implement here logical control ----------------
 

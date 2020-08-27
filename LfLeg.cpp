@@ -1,6 +1,7 @@
 #include "LfLeg.H"
 
 LfLeg::LfLeg() : Leg() {
+    LegNum_ = '1';
     vector<double> initializeVector{ 1, 0, 0, -w / 2, 0, 0, 1, H / 2, 0, -1, 0, 0, 0, 0, 0, 1 };
     vector<double> initPos{ -xi , yi, zi, 1 };
     try
